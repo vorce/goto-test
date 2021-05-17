@@ -3,6 +3,7 @@
     "publisher": "vorce",
     "displayName": "goto-test",
     "description": "Go to the test file for a source",
+    "repository": "https://github.com/vorce/goto-test",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.55.0"
