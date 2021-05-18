@@ -5,13 +5,16 @@ Useful when jumping between implementation and tests often.
 
 ## Features
 
-Go to Test file -> Try to find and switch to the current file's test file. Uses configuration for each file ending to search. Only works in workspaces.
+###  Go to Test file
+
+Tries to find and switch to the current file's test file. Uses configuration for each file ending to search. Only works in workspaces.
+
+1. Open a workspace
+2. If needed edit the config to add more file types
+3. Open a file you have tests for
+4. Run the "Go to Test file" command (`Ctrl+Shift+P` or `Cmd+Shift+P` and then type "go to test file")
 
 ## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
 
 This extension contributes the following settings:
 
