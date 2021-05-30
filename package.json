@@ -4,7 +4,7 @@
     "displayName": "goto-test",
     "description": "Go to the test file for a source",
     "repository": "https://github.com/vorce/goto-test",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "engines": {
         "vscode": "^1.55.0"
     },
@@ -29,7 +29,8 @@
                     "type": "object",
                     "default": {
                         "ex": "%source_file%_test.exs",
-                        "java": "%source_file%Test.java"
+                        "java": "%source_file%Test.java",
+                        "ts": "%source_file%.test.ts"
                     },
                     "description": "Test file patterns for different file endings. %source_file% is a special template value which will be replaced with the name of the source file (without file ending)."
                 }
