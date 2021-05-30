@@ -4,20 +4,31 @@ import * as vscode from "vscode";
 
 const fileExtensionRegex = new RegExp(/(?:\.([^.]+))?$/);
 
-const getTestFileName = (sourceFileUri: vscode.Uri): string => {
-  const fileEnding = fileExtensionRegex.exec(sourceFileUri.fsPath)![1];
-  const defaultPattern = `%source_file%_test.${fileEnding}`;
-  const pattern: string =
-    vscode.workspace
-      .getConfiguration("goto-test.testFilePatterns")
-      .get(fileEnding) || defaultPattern;
-  const sourceFileName =
-    sourceFileUri.fsPath
+export const fileNameWithoutExtension = (
+  uri: vscode.Uri,
+  extension: string
+) => {
+  return (
+    uri.fsPath
       .split("\\")
       .pop()
       ?.split("/")
       .pop()
-      ?.replace(`.${fileEnding}`, "") || "BLA";
+      ?.replace(`.${extension}`, "") || "BLA"
+  );
+};
+
+export const defaultTestFilePattern = (fileExtension: string) =>
+  `%source_file%_test.${fileExtension}`;
+
+export const getTestFileName = (sourceFileUri: vscode.Uri): string => {
+  const fileEnding = fileExtensionRegex.exec(sourceFileUri.fsPath)![1];
+  const defaultPattern = defaultTestFilePattern(fileEnding);
+  const pattern: string =
+    vscode.workspace
+      .getConfiguration("goto-test.testFilePatterns")
+      .get(fileEnding) || defaultPattern;
+  const sourceFileName = fileNameWithoutExtension(sourceFileUri, fileEnding);
   const testFileName = pattern.replace("%source_file%", sourceFileName);
   return testFileName;
 };
@@ -36,6 +47,55 @@ const fileQuickPicks = (uris: vscode.Uri[]) =>
     return { uri: uri, label: uri.fsPath };
   });
 
+const openTestFile = (testFileName: string) => {
+  vscode.window.setStatusBarMessage(
+    `Finding and switching to ${testFileName}`,
+    vscode.workspace
+      .findFiles(`**/${testFileName}`, undefined, 10)
+      .then((uris) => {
+        if (uris.length < 1) {
+          vscode.window.showErrorMessage(
+            `Couldn't find test file: ${testFileName}`
+          );
+          return null;
+        } else if (uris.length === 1) {
+          return vscode.workspace.openTextDocument(uris[0]);
+        } else {
+          const quickPicks = fileQuickPicks(uris);
+          return vscode.window
+            .showQuickPick(quickPicks, {
+              title: "More than one test file candidate matches, pick one",
+            })
+            .then((quickPick) => {
+              if (quickPick) {
+                return vscode.workspace.openTextDocument(quickPick.uri);
+              } else {
+                return null;
+              }
+            });
+        }
+      })
+      .then(
+        (doc) => {
+          if (doc) {
+            vscode.window.showTextDocument(doc);
+          }
+        },
+        (error) => vscode.window.showErrorMessage(error)
+      )
+  );
+};
+
+const openTestFileFromActiveSourceFile = () => {
+  const activeFileUri = vscode.window.activeTextEditor?.document.uri;
+  if (activeFileUri) {
+    const testFileName = getTestFilePath(activeFileUri);
+    if (testFileName) {
+      openTestFile(testFileName);
+    }
+  }
+};
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -48,51 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
   // The commandId parameter must match the command field in package.json
   let disposable = vscode.commands.registerCommand(
     "goto-test.gotoTestFile",
-    () => {
-      const activeFileUri = vscode.window.activeTextEditor?.document.uri;
-      if (activeFileUri) {
-        const testFileName = getTestFilePath(activeFileUri);
-        if (testFileName) {
-          vscode.window.setStatusBarMessage(
-            `Finding and switching to ${testFileName}`,
-            vscode.workspace
-              .findFiles(`**/${testFileName}`, undefined, 10)
-              .then((uris) => {
-                if (uris.length < 1) {
-                  vscode.window.showErrorMessage(
-                    `Couldn't find test file counterpart: ${testFileName}`
-                  );
-                  return null;
-                } else if (uris.length === 1) {
-                  return vscode.workspace.openTextDocument(uris[0]);
-                } else {
-                  const quickPicks = fileQuickPicks(uris);
-                  return vscode.window
-                    .showQuickPick(quickPicks, {
-                      title:
-                        "More than one test file candidate matches, pick one",
-                    })
-                    .then((quickPick) => {
-                      if (quickPick) {
-                        return vscode.workspace.openTextDocument(quickPick.uri);
-                      } else {
-                        return null;
-                      }
-                    });
-                }
-              })
-              .then(
-                (doc) => {
-                  if (doc) {
-                    vscode.window.showTextDocument(doc);
-                  }
-                },
-                (error) => vscode.window.showErrorMessage(error)
-              )
-          );
-        }
-      }
-    }
+    openTestFileFromActiveSourceFile
   );
 
   context.subscriptions.push(disposable);
