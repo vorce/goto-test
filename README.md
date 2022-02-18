@@ -38,3 +38,13 @@ Only works in workspaces
 ## Release Notes
 
 -
+
+## Extension publishing
+
+goto-test is published to [Open VSX](https://open-vsx.org/extension/vorce/goto-test/), an open-source registry for VS Code extensions.
+
+* [Guide to publishing](https://github.com/eclipse/openvsx/wiki/Publishing-Extensions#how-to-publish-an-extension)
+
+1. make changes and bump verion in `package.json`
+1. `npm install`
+1. `npx ovsx publish -p <token>`
