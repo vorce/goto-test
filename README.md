@@ -14,6 +14,10 @@ Tries to find and switch to the current file's test file. Uses configuration for
 3. Open a file you have tests for
 4. Run the "Go to Test file" command (`Ctrl+Shift+P` or `Cmd+Shift+P` and then type "go to test file")
 
+### Go to Source file
+
+The reverse of "Go to Test file"; tries to open the source/implementation file for a test file.
+
 ## Extension Settings
 
 This extension contributes the following settings:

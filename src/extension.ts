@@ -33,11 +33,28 @@ export const getTestFileName = (sourceFileUri: vscode.Uri): string => {
   return testFileName;
 };
 
-export const getTestFilePath = (sourceFileUri: vscode.Uri) => {
+export const getSourceFileName = (testFileUri: vscode.Uri): string => {
+  const fileEnding = fileExtensionRegex.exec(testFileUri.fsPath)![1];
+  const testFileName = fileNameWithoutExtension(testFileUri, fileEnding);
+  const defaultPattern = `%source_file%.${fileEnding}`;
+  let pattern: string = defaultPattern;
+  const config = vscode.workspace.getConfiguration("goto-test.testFilePatterns");
+  Object.keys(config)
+    .forEach(key => {
+      const value: string = config.get(key) || "";
+      if(value.endsWith(`.${fileEnding}`)) {
+        pattern = `%source_file%.${key}`;
+      }
+    });
+  const sourceFileName = pattern.replace("%source_file%", testFileName.replace(/[\W_]test/i, ""));
+  return sourceFileName;
+};
+
+export const getFilePath = (sourceFileUri: vscode.Uri, fileNameFn: (fileUri: vscode.Uri) => string) => {
   if (sourceFileUri.scheme !== "file") {
     return null;
   }
-  const testFileName = getTestFileName(sourceFileUri);
+  const testFileName = fileNameFn(sourceFileUri); //  getTestFileName(sourceFileUri);
 
   return testFileName;
 };
@@ -47,7 +64,7 @@ const fileQuickPicks = (uris: vscode.Uri[]) =>
     return { uri: uri, label: uri.fsPath };
   });
 
-const openTestFile = (testFileName: string) => {
+const openFile = (testFileName: string) => {
   vscode.window.setStatusBarMessage(
     `Finding and switching to ${testFileName}`,
     vscode.workspace
@@ -55,7 +72,7 @@ const openTestFile = (testFileName: string) => {
       .then((uris) => {
         if (uris.length < 1) {
           vscode.window.showErrorMessage(
-            `Couldn't find test file: ${testFileName}`
+            `Couldn't find file: ${testFileName}`
           );
           return null;
         } else if (uris.length === 1) {
@@ -64,7 +81,7 @@ const openTestFile = (testFileName: string) => {
           const quickPicks = fileQuickPicks(uris);
           return vscode.window
             .showQuickPick(quickPicks, {
-              title: "More than one test file candidate matches, pick one",
+              title: "More than one file candidate matches, pick one",
             })
             .then((quickPick) => {
               if (quickPick) {
@@ -89,12 +106,22 @@ const openTestFile = (testFileName: string) => {
 const openTestFileFromActiveSourceFile = () => {
   const activeFileUri = vscode.window.activeTextEditor?.document.uri;
   if (activeFileUri) {
-    const testFileName = getTestFilePath(activeFileUri);
+    const testFileName = getFilePath(activeFileUri, getTestFileName);
     if (testFileName) {
-      openTestFile(testFileName);
+      openFile(testFileName);
     }
   }
 };
+
+const openSourceFileFromActiveTestFile = () => {
+  const activeFileUri = vscode.window.activeTextEditor?.document.uri;
+  if (activeFileUri) {
+    const sourceFileName = getFilePath(activeFileUri, getSourceFileName);
+    if (sourceFileName) {
+      openFile(sourceFileName);
+    }
+  }
+}
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -106,12 +133,18 @@ export function activate(context: vscode.ExtensionContext) {
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  let disposable = vscode.commands.registerCommand(
+  let goToTestFile = vscode.commands.registerCommand(
     "goto-test.gotoTestFile",
     openTestFileFromActiveSourceFile
   );
 
-  context.subscriptions.push(disposable);
+  let goToSourceFile = vscode.commands.registerCommand(
+    "goto-test.gotoSourceFile",
+    openSourceFileFromActiveTestFile
+  )
+
+  context.subscriptions.push(goToTestFile);
+  context.subscriptions.push(goToSourceFile);
 }
 
 // this method is called when your extension is deactivated
