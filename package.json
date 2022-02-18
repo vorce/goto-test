@@ -4,7 +4,7 @@
     "displayName": "goto-test",
     "description": "Go to the test file for a source",
     "repository": "https://github.com/vorce/goto-test",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "engines": {
         "vscode": "^1.55.0"
     },
@@ -12,7 +12,8 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:goto-test.gotoTestFile"
+        "onCommand:goto-test.gotoTestFile",
+        "onCommand:goto-test.gotoSourceFile"
     ],
     "main": "./out/extension.js",
     "contributes": {
@@ -20,6 +21,10 @@
             {
                 "command": "goto-test.gotoTestFile",
                 "title": "Go to Test file"
+            },
+            {
+                "command": "goto-test.gotoSourceFile",
+                "title": "Go to Source file"
             }
         ],
         "configuration": {

@@ -25,13 +25,23 @@ suite("getTestFileName", () => {
   });
 });
 
-suite("getTestFilePath", () => {
+suite("getFilePath", () => {
   test("returns null for invalid source file URI scheme", () => {
     const sourceFile = vscode.Uri.parse("http://www.msft.com/some/path");
 
-    const testFile = gotoTest.getTestFilePath(sourceFile);
+    const testFile = gotoTest.getFilePath(sourceFile, gotoTest.getTestFileName);
 
     assert.strictEqual(testFile, null);
+  });
+});
+
+suite("getSourceFileName", () => {
+  test("returns ts source file", () => {
+    const uri = vscode.Uri.file("./src/test/extension.test.ts");
+
+    const result = gotoTest.getSourceFileName(uri);
+
+    assert.strictEqual(result, "extension.ts");
   });
 });
 
